@@ -331,85 +331,127 @@
       }
     </script>
     <script>
-      let startTime;
-      let interval;
-      let running = false;
-      let ready = false;
-      let holding = false;
-      let holdTimeout;
+let startTime;
+let interval;
+let running = false;
+let ready = false;
+let holding = false;
+let holdTimeout;
 
-      const timerDisplay = document.getElementById("timer");
-      const timesList = document.getElementById("times");
+const timerDisplay = document.getElementById("timer");
+const timesList = document.getElementById("times");
 
-      function formatTime(ms) {
-        let milliseconds = ms % 1000;
-        let seconds = Math.floor(ms / 1000) % 60;
-        let minutes = Math.floor(ms / 60000);
+function formatTime(ms) {
+    let milliseconds = ms % 1000;
+    let seconds = Math.floor(ms / 1000) % 60;
+    let minutes = Math.floor(ms / 60000);
 
-        return (
-          (minutes < 10 ? "0" : "") +
-          minutes +
-          ":" +
-          (seconds < 10 ? "0" : "") +
-          seconds +
-          "." +
-          milliseconds.toString().padStart(3, "0")
-        );
-      }
+    return (
+        (minutes < 10 ? "0" : "") + minutes + ":" +
+        (seconds < 10 ? "0" : "") + seconds + "." +
+        milliseconds.toString().padStart(3, "0")
+    );
+}
 
-      function updateTimer() {
-        const now = Date.now();
-        const elapsed = now - startTime;
-        timerDisplay.textContent = formatTime(elapsed);
-      }
+function updateTimer() {
+    const now = Date.now();
+    timerDisplay.textContent = formatTime(now - startTime);
+}
 
-      // HOLD SPACE (ARM TIMER)
-      document.addEventListener("keydown", function (e) {
-        if (e.code === "Space" && !holding) {
-          e.preventDefault();
-          holding = true;
+/* ============================= */
+/* ===== START HOLD LOGIC ====== */
+/* ============================= */
 
-          if (!running) {
-            timerDisplay.style.color = "red";
+function startHold() {
+    if (running) return;
 
-            holdTimeout = setTimeout(() => {
-              ready = true;
-              timerDisplay.style.color = "lime";
-            }, 500); // hold time before ready
-          }
+    holding = true;
+    timerDisplay.style.color = "red";
+
+    holdTimeout = setTimeout(() => {
+        ready = true;
+        timerDisplay.style.color = "lime";
+    }, 500);
+}
+
+function releaseHold() {
+    holding = false;
+    clearTimeout(holdTimeout);
+
+    if (!running && ready) {
+        // START TIMER
+        startTime = Date.now();
+        interval = setInterval(updateTimer, 10);
+        running = true;
+        ready = false;
+        timerDisplay.style.color = "white";
+    }
+}
+
+/* ============================= */
+/* ===== STOP TIMER LOGIC ====== */
+/* ============================= */
+
+function stopTimer() {
+    if (!running) return;
+
+    clearInterval(interval);
+    running = false;
+
+    const finalTime = timerDisplay.textContent;
+    const li = document.createElement("li");
+    li.textContent = finalTime;
+    timesList.prepend(li);
+
+    timerDisplay.style.color = "white";
+}
+
+/* ============================= */
+/* ===== KEYBOARD SUPPORT ====== */
+/* ============================= */
+
+document.addEventListener("keydown", function(e) {
+    if (e.code === "Space" && !holding) {
+        e.preventDefault();
+        startHold();
+    }
+});
+
+document.addEventListener("keyup", function(e) {
+    if (e.code === "Space") {
+        e.preventDefault();
+
+        if (!running) {
+            releaseHold();
+        } else {
+            stopTimer();
         }
-      });
+    }
+});
 
-      // RELEASE SPACE
-      document.addEventListener("keyup", function (e) {
-        if (e.code === "Space") {
-          e.preventDefault();
-          holding = false;
+/* ============================= */
+/* ===== TOUCH SUPPORT ========= */
+/* ============================= */
 
-          if (!running && ready) {
-            // START TIMER
-            startTime = Date.now();
-            interval = setInterval(updateTimer, 10);
-            running = true;
-            ready = false;
-            timerDisplay.style.color = "white";
-          } else if (running) {
-            // STOP TIMER
-            clearInterval(interval);
-            running = false;
+document.addEventListener("touchstart", function(e) {
+    if (!holding) startHold();
+});
 
-            const finalTime = timerDisplay.textContent;
-            const li = document.createElement("li");
-            li.textContent = finalTime;
-            timesList.prepend(li);
+document.addEventListener("touchend", function(e) {
+    if (!running) {
+        releaseHold();
+    } else {
+        stopTimer();
+    }
+});
 
-            timerDisplay.style.color = "white";
-          }
+/* Prevent scrolling while touching */
+document.addEventListener("touchmove", function(e) {
+    if (holding) e.preventDefault();
+}, { passive: false });
 
-          clearTimeout(holdTimeout);
-          timerDisplay.style.color = running ? "white" : "white";
-        }
-      });
+</script>
+
 
       function resetTimes() {
         timesList.innerHTML = "";
