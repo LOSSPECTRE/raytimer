@@ -263,6 +263,22 @@
 #deleteAllBtn:hover {
     filter: brightness(0.9);
 }
+.hold-btn {
+    margin-top: 20px;
+    padding: 14px 30px;
+    font-size: 18px;
+    border-radius: 30px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.3s ease;
+}
+
+.hold-btn:active {
+    transform: scale(0.95);
+}
+
 
     </style>
   </head>
@@ -297,7 +313,10 @@
       <div class="timer-container">
         <h1>Rubik's Cube Timer</h1>
         <div id="timer">00:00.000</div>
-        <p>Press SPACE to start/stop</p>
+        <button id="holdBtn" class="hold-btn">
+    Hold to Start
+</button>
+
         <button onclick="resetTimes()">Reset Times</button>
 
         <div class="times-list">
@@ -309,6 +328,8 @@
     </section>
 
     <script>
+        const holdBtn = document.getElementById("holdBtn");
+
       function toggleDarkMode() {
         document.body.classList.toggle("dark");
 
@@ -428,6 +449,33 @@ document.addEventListener("keyup", function(e) {
         }
     }
 });
+/* ============================= */
+/* ===== BUTTON SUPPORT ======== */
+/* ============================= */
+
+holdBtn.addEventListener("mousedown", startHold);
+holdBtn.addEventListener("mouseup", function() {
+    if (!running) {
+        releaseHold();
+    } else {
+        stopTimer();
+    }
+});
+
+holdBtn.addEventListener("touchstart", function(e) {
+    e.preventDefault();
+    startHold();
+});
+
+holdBtn.addEventListener("touchend", function(e) {
+    e.preventDefault();
+    if (!running) {
+        releaseHold();
+    } else {
+        stopTimer();
+    }
+});
+
 
 /* ============================= */
 /* ===== TOUCH SUPPORT ========= */
